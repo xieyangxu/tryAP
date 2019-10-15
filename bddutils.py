@@ -1,5 +1,6 @@
 import ipaddress
 from pyeda.inter import *
+from pyeda.boolalg.bdd import bdd2expr
 
 # ipn = ipaddress.ip_network('1.0.0.0/24')
 # addr = ipn.network_address.packed
