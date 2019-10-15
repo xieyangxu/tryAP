@@ -5,7 +5,7 @@ from typing import Dict, List
 
 from bddutils import *
 from aputils import *
-from pyeda import farray
+from pyeda.boolalg.bfarray import farray
 
 ws_path = os.path.abspath(os.path.dirname(__file__))
 dp_path = os.path.join(ws_path, 'traces/dataplane/sample_dataplane.yml')

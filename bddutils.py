@@ -1,7 +1,6 @@
 import ipaddress
-from pyeda.inter import *
 from pyeda.boolalg.bdd import bdd2expr
-from pyeda.boolalg.bdd import bddzeros, bddones
+from pyeda.boolalg.bfarray import bddzeros, bddones, bddvars
 
 bdd_false = bddzeros(1)[0]
 bdd_true = bddones(1)[0]
