@@ -1,14 +1,11 @@
 import yaml
 import os.path
 import ipaddress
-from typing import Dict, List, Set
+from typing import Dict, List
 
 from bddutils import *
+from aputils import *
 from pyeda import farray
-from pyeda.boolalg.bdd import bddzeros, bddones
-
-bdd_false = bddzeros(1)[0]
-bdd_true = bddones(1)[0]
 
 ws_path = os.path.abspath(os.path.dirname(__file__))
 dp_path = os.path.join(ws_path, 'traces/dataplane/sample_dataplane.yml')
