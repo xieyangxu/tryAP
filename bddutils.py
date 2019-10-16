@@ -71,9 +71,9 @@ def range2bdd(vrange, bitlen, namespace): # BDD version of f(x): x in vrange?
     tmp = vrange.split('-')
     vstart = int(tmp[0])
     vend = int(tmp[1])
-    f_equal_to_end = equal2bdd(vend, 8, namespace)
-    f_less_than_end = less2bdd(vend, 8, namespace)
-    f_less_than_start = less2bdd(vstart, 8, namespace)
+    f_equal_to_end = equal2bdd(vend, bitlen, namespace)
+    f_less_than_end = less2bdd(vend, bitlen, namespace)
+    f_less_than_start = less2bdd(vstart, bitlen, namespace)
     f = f_equal_to_end | (f_less_than_end & ~f_less_than_start)
     return f
 
