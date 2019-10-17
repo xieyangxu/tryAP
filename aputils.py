@@ -43,10 +43,10 @@ def decompose_pred(pred: farray, atomic_preds: List[farray]) -> Set[int]:
         Output:
             Set of integers representing indexes into atomic_preds."""
 
-    indexes: Set[int] = Set()
+    indexes: Set[int] = set()
     for i, ap in enumerate(atomic_preds):
-        # if ap - pred = empty then add ap's index. x in ap and not in pred
-        if (pred & (~ap)).is_zero():
+        # if ap & pred != empty then add ap's index. ap is in pred
+        if not (pred & ap).is_zero():
             indexes.add(i)
     return indexes
 
