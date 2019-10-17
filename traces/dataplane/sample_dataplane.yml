@@ -93,7 +93,7 @@ Devices:
       - Prefix: 70.4.193.0/24
         Interface: r4@Eth3
       - Prefix: 10.0.0.1/32
-        Interface: r4:Loopback0
+        Interface: r4@Loopback0
       - Prefix: 70.4.194.0/24
         Interface: r4@Eth1
       - Prefix: 70.4.194.0/24
