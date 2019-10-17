@@ -12,21 +12,6 @@ dp_path = os.path.join(ws_path, 'traces/dataplane/sample_dataplane.yml')
 with open(dp_path) as f:
     dp = yaml.load(f, Loader=yaml.BaseLoader)
 
-if_dict: Dict[str, int] = {} # dict for interface names
-for device in dp['Devices']: # build index for interface names
-    if_cnt = 0
-    for interface in device['Interfaces']:
-        if_dict[interface['Name']] = if_cnt
-        if_cnt = if_cnt + 1
-
-acl_dict: Dict[str, int] = {} # dict for acl names
-for device in dp['Devices']: # build index for acl names
-    acl_cnt = 0
-    for acl in device['Acls']:
-        acl_dict[acl['Name']] = acl_cnt
-        acl_cnt = acl_cnt + 1
-
-
 def acl2pred(acl) -> farray:
     """Algorithm 1
         Converts an ACL to a predicate.
@@ -51,24 +36,24 @@ def rule_preflen(ft_rule) -> int: # helper function to sort forwarding table
     ipn = ipaddress.IPv4Network(ft_rule['Prefix'])
     return ipn.prefixlen
 
-def ft2preds(forwarding_table, interfaces) -> List[farray]:
+def ft2preds(forwarding_table, interfaces) -> Dict[str, farray]:
     """Algorithm 2
         Converts a forwarding table to predicates.
 
         Returns:
-            A list of forwarding predicates for the device.
-            Each predicate corresponds to an interface.
-            Ordered by interface index values in if_dict.
+            A dict of forwarding predicates for the device.
+            key = interface name
+            value = forwarding predicate
     """
-    preds = [bdd_false for interface in interfaces] # init with false
+    preds = {interface['Name']:bdd_false for interface in interfaces} # init with false
 
     forwarding_table.sort(key=rule_preflen, reverse=True) # longest prefix first
     
     fwd = bdd_false # fwd <- false
     for ft_rule in forwarding_table:
-        if_index = if_dict[ft_rule['Interface']]
+        if_name = ft_rule['Interface']
         prefix = ipp2bdd(ft_rule['Prefix']) # p <- p \/ (prefix /\ ~fwd)
-        preds[if_index] = preds[if_index] | (prefix & (~fwd))
+        preds[if_name] = preds[if_name] | (prefix & (~fwd))
         fwd = fwd | prefix # fwd <- fwd \/ prefix
     return preds
 
@@ -76,11 +61,30 @@ def ft2preds(forwarding_table, interfaces) -> List[farray]:
 #print(dp['Devices'][1]['ForwardingTable'])
 #for pred in preds:
 #    print(bdd2expr(pred))
-pred = acl2pred(dp['Devices'][3]['Acls'][0])
-print(bdd2expr(pred))
+#pred = acl2pred(dp['Devices'][3]['Acls'][0])
+#print(bdd2expr(pred))
 
-# acls = [acl2pred(device['Acls']) 
-#     for device in dp['Devices']]
-# fts = [ft2preds(device['ForwardingTable'], device['Interfaces']) 
-#     for device in dp['Devices']]
+pred_dict_acls = {
+    acl['Name']:acl2pred(acl) 
+    for device in dp['Devices'] for acl in device['Acls']
+}
+pred_dict_fts = {}
+for device in dp['Devices']:
+    tmp_dict = ft2preds(device['ForwardingTable'], device['Interfaces'])
+    pred_dict_fts.update(tmp_dict)
 
+
+pred_set_acls = {pred for name,pred in pred_dict_acls.items()}
+pred_set_fts = {pred for name,pred in pred_dict_fts.items()}
+
+ap_acls = preds2atomic_preds(pred_set_acls)
+ap_fts = preds2atomic_preds(pred_set_fts)
+
+nset_dict_acls = {
+    name:decompose_pred(pred, ap_acls)
+    for name,pred in pred_dict_acls.items()
+}
+nset_dict_fts = {
+    name:decompose_pred(pred, ap_fts)
+    for name,pred in pred_dict_fts.items()
+}
