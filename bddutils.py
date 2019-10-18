@@ -1,24 +1,11 @@
+from typing import Dict, List
 import ipaddress
 from pyeda.boolalg.bdd import bdd2expr
+from pyeda.boolalg.bfarray import farray
 from pyeda.boolalg.bfarray import bddzeros, bddones, bddvars
 
 bdd_false = bddzeros(1)[0]
 bdd_true = bddones(1)[0]
-
-# ipn = ipaddress.ip_network('1.0.0.0/24')
-# addr = ipn.network_address.packed
-# pref = ipn.prefixlen
-# print(ipn.network_address.packed)
-# print(ipn.prefixlen)
-
-# x = bddvars('x', 32)
-# f = expr2bdd(x[0] & ~x[1])
-# print(bdd2expr(f))
-
-# f1 = expr2bdd(~x[0] & ~x[1])
-# f = f | f1
-# f = expr2bdd(x[0] | ~ x[0])
-# print(bdd2expr(f))
 
 
 def ipp2bdd(ipprefix='0.0.0.0/0', namespace='dip'): # convert a ip prefix to BDD
@@ -100,7 +87,50 @@ def aclr2bdd(acl_rule): # convert an ACL rule to BDD
     f = f_protocol & f_dstip & f_srcip & f_dstport & f_srcport
     return f
 
+def acl2pred(acl) -> farray:
+    """Algorithm 1
+        Converts an ACL to a predicate.
 
+        Assume ACL first-match processing.
+    """
+    allowed = bdd_false # init with false
+    denied = bdd_false
+    
+    for rule in acl['Rules']:
+        if rule['Action'] == 'Deny':
+            denied = denied | (aclr2bdd(rule) & ~allowed)
+        else:
+            allowed = allowed | (aclr2bdd(rule) & ~denied)
+    if acl['DefaultAction'] == 'Deny':
+        return allowed
+    else:
+        return ~denied
+
+
+def rule_preflen(ft_rule) -> int: # helper function to sort forwarding table
+    ipn = ipaddress.IPv4Network(ft_rule['Prefix'])
+    return ipn.prefixlen
+
+def ft2preds(forwarding_table, interfaces) -> Dict[str, farray]:
+    """Algorithm 2
+        Converts a forwarding table to predicates.
+
+        Returns:
+            A dict of forwarding predicates for the device.
+            key = interface name
+            value = forwarding predicate
+    """
+    preds = {interface['Name']:bdd_false for interface in interfaces} # init with false
+
+    forwarding_table.sort(key=rule_preflen, reverse=True) # longest prefix first
+    
+    fwd = bdd_false # fwd <- false
+    for ft_rule in forwarding_table:
+        if_name = ft_rule['Interface']
+        prefix = ipp2bdd(ft_rule['Prefix']) # p <- p \/ (prefix /\ ~fwd)
+        preds[if_name] = preds[if_name] | (prefix & (~fwd))
+        fwd = fwd | prefix # fwd <- fwd \/ prefix
+    return preds
 
 
 if __name__=="__main__":
