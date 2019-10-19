@@ -66,9 +66,6 @@ def range2bdd(vrange, bitlen, namespace): # BDD version of f(x): x in vrange?
 
 
 def aclr2bdd(acl_rule): # convert an ACL rule to BDD
-    allowed = bddzeros(1)[0]
-    denied = bddzeros(1)[0]
-
     # protocol
     f_protocol = range2bdd(acl_rule['Protocol'], 8, 'pro')
     
@@ -131,6 +128,36 @@ def ft2preds(forwarding_table, interfaces) -> Dict[str, farray]:
         preds[if_name] = preds[if_name] | (prefix & (~fwd))
         fwd = fwd | prefix # fwd <- fwd \/ prefix
     return preds
+
+def qu2pred(query) -> farray: # convert a query to a predicate
+    # protocol
+    f_protocol = bdd_false
+    for dip in query['Protocol']:
+        f_protocol |= range2bdd(dip, 8, 'dip')
+    
+    # dst ip
+    f_dstip = bdd_false
+    for dst in query['DstIp']:
+        f_dstip |= ipp2bdd(dst, 'dst')
+
+    # src ip
+    f_srcip = bdd_false
+    for src in query['SrcIp']:
+        f_srcip |= ipp2bdd(src, 'src')
+
+    # dst port
+    f_dstport = bdd_false
+    for dpt in query['DstPort']:
+        f_dstport |= range2bdd(dpt, 16, 'dpt')
+
+    # src port
+    f_srcport = bdd_false
+    for spt in query['SrcPort']:
+        f_srcport |= range2bdd(spt, 16, 'spt')
+
+    f = f_protocol & f_dstip & f_srcip & f_dstport & f_srcport
+    return f
+
 
 
 if __name__=="__main__":

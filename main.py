@@ -3,12 +3,28 @@ import os.path
 
 from bddutils import *
 from aputils import *
+from reachability import *
 
-# load dataplane from yaml file as dict
+# load dataplane and queries from yaml file
 ws_path = os.path.abspath(os.path.dirname(__file__))
+
 dp_path = os.path.join(ws_path, 'traces/dataplane/sample_dataplane.yml')
 with open(dp_path) as f:
-    dp = yaml.load(f, Loader=yaml.BaseLoader)
+    dp = yaml.load(f, Loader=yaml.SafeLoader)
+
+qu_path = os.path.join(ws_path, 'traces/query/sample_query.yml')
+with open(qu_path) as f:
+    qu = yaml.load(f, Loader=yaml.SafeLoader)
+
+# build name dict for devices and interfaces
+device_dict = {
+    device['Name']:device
+    for device in dp['Devices']
+}
+interface_dict = {
+    interface['Name']:interface
+    for device in dp['Devices'] for interface in device['Interfaces']
+}
 
 # convert every ACL to a predicate and build name-predicate dict
 pred_dict_acls = {
@@ -39,3 +55,7 @@ iset_dict_fts = {
     name:decompose_pred(pred, ap_fts)
     for name,pred in pred_dict_fts.items()
 }
+
+for query in qu:
+    print(judge_query(query, device_dict, interface_dict, ap_acls, ap_fts,
+        iset_dict_acls, iset_dict_fts))
