@@ -1,4 +1,4 @@
-#About
+# About
 
 An implementation of dataplane verification based on [Real-time Verification of Network Properties using Atomic Predicates](http://www.cs.utexas.edu/users/lam/Vita/Cpapers/Yang_Lam_AP_Verifier_2013.pdf)
 
