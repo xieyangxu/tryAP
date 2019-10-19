@@ -1,0 +1,8 @@
+# True: simple p2p network w/o any contrain
+- Ingress: [r1@Eth0]
+  Egress: [r2@Eth0]
+  DstIp: [0.0.0.0/0]
+  SrcIp: [0.0.0.0/0]
+  Protocol: [0-255]
+  DstPort: [0-65535]
+  SrcPort: [0-65535]

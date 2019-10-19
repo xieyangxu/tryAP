@@ -1,0 +1,21 @@
+Devices:
+  - Name: r1
+    Interfaces:
+      - Name: r1@Eth0
+        Neighbor: r2@Eth0
+        InAcl: null
+        OutAcl: null
+    ForwardingTable:
+      - Prefix: 0.0.0.0/0
+        Interface: r1@Eth0
+    Acls: []
+  - Name: r2
+    Interfaces:
+      - Name: r2@Eth0
+        Neighbor: r1@Eth0
+        InAcl: null
+        OutAcl: null
+    ForwardingTable:
+      - Prefix: 0.0.0.0/0
+        Interface: r2@Eth0
+    Acls: []

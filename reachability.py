@@ -51,8 +51,8 @@ def network_dfs(iport, eport, set_acl, set_ft, dfsn):
     # find next hop device
     for out_interface in device_dict[in_device_name]['Interfaces']:
         out_interface_name = out_interface['Name']
-        if out_interface_name == iport: # NOTE: assume no backwards forwarding
-            continue
+        #if out_interface_name == iport: # NOTE: assume no backwards forwarding
+        #    continue
         next_hop_iport = out_interface['Neighbor']
         if next_hop_iport == None:
             continue
@@ -108,6 +108,7 @@ def judge_query(query, _device_dict, _interface_dict, _ap_acls, _ap_fts,
     global reachable
     reachable = []
     network_dfs(iport, eport, inject_set_acl, inject_set_ft, 1)
+
     # union of all reachable paths
     reachable_pred = bdd_false
     for s_acl, s_ft in reachable:

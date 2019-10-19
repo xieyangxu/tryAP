@@ -1,0 +1,31 @@
+Devices:
+  - Name: r1
+    Interfaces:
+      - Name: r1@Eth0
+        Neighbor: r2@Eth0
+        InAcl: null
+        OutAcl: null
+    ForwardingTable:
+      - Prefix: 0.0.0.0/0
+        Interface: r1@Eth0
+    Acls: []
+  - Name: r2
+    Interfaces:
+      - Name: r2@Eth0
+        Neighbor: r1@Eth0
+        InAcl: r2_inbound_deny
+        OutAcl: null
+    ForwardingTable:
+      - Prefix: 0.0.0.0/0
+        Interface: r2@Eth0
+    Acls:
+      - Name: r2_inbound_deny
+        DefaultAction: Allow
+        Rules:
+          - Description: "deny a protocol"
+            DstIp: 0.0.0.0/0
+            SrcIp: 0.0.0.0/0
+            Protocol: 0-127
+            DstPort: 0-65535
+            SrcPort: 0-65535
+            Action: Deny

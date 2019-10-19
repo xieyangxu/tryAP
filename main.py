@@ -5,14 +5,16 @@ from bddutils import *
 from aputils import *
 from reachability import *
 
+trace = 'sample'
+
 # load dataplane and queries from yaml file
 ws_path = os.path.abspath(os.path.dirname(__file__))
 
-dp_path = os.path.join(ws_path, 'traces/dataplane/sample_dataplane.yml')
+dp_path = os.path.join(ws_path, 'traces/dataplane/'+trace+'_dataplane.yml')
 with open(dp_path) as f:
     dp = yaml.load(f, Loader=yaml.SafeLoader)
 
-qu_path = os.path.join(ws_path, 'traces/query/sample_query.yml')
+qu_path = os.path.join(ws_path, 'traces/query/'+trace+'_query.yml')
 with open(qu_path) as f:
     qu = yaml.load(f, Loader=yaml.SafeLoader)
 
@@ -41,6 +43,9 @@ for device in dp['Devices']:
 # compute atomic predicates for ACL and FT seperately
 pred_set_acls = {pred for name,pred in pred_dict_acls.items()}
 pred_set_fts = {pred for name,pred in pred_dict_fts.items()}
+# if NO ACL exists: a single 1 predicate is added, enabling trivial tests
+if len(pred_set_acls) == 0: 
+    pred_set_acls.add(bdd_true)
 
 ap_acls = preds2atomic_preds(pred_set_acls)
 ap_fts = preds2atomic_preds(pred_set_fts)

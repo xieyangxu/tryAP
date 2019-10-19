@@ -22,7 +22,7 @@ def preds2atomic_preds(preds: Set[farray]) -> List[farray]:
     Input: A set of predicates.
     Output: A list of atomic predicates.
     """
-
+    atomic_preds = {}
     for i, pred in enumerate(preds):
         if i == 0:
             atomic_preds = pred2atomic_pred(pred)

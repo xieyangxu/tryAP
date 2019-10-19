@@ -1,0 +1,9 @@
+# True: protocol 128-255
+# False: protocal 0-127
+- Ingress: [r1@Eth0]
+  Egress: [r2@Eth0]
+  DstIp: [0.0.0.0/0]
+  SrcIp: [0.0.0.0/0]
+  Protocol: [128-128]
+  DstPort: [0-65535]
+  SrcPort: [0-65535]

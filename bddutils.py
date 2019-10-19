@@ -133,17 +133,17 @@ def qu2pred(query) -> farray: # convert a query to a predicate
     # protocol
     f_protocol = bdd_false
     for dip in query['Protocol']:
-        f_protocol |= range2bdd(dip, 8, 'dip')
+        f_protocol |= range2bdd(dip, 8, 'pro')
     
     # dst ip
     f_dstip = bdd_false
     for dst in query['DstIp']:
-        f_dstip |= ipp2bdd(dst, 'dst')
+        f_dstip |= ipp2bdd(dst, 'dip')
 
     # src ip
     f_srcip = bdd_false
     for src in query['SrcIp']:
-        f_srcip |= ipp2bdd(src, 'src')
+        f_srcip |= ipp2bdd(src, 'sip')
 
     # dst port
     f_dstport = bdd_false
