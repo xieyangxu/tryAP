@@ -61,6 +61,7 @@ iset_dict_fts = {
     for name,pred in pred_dict_fts.items()
 }
 
+# Judge reachability statement for every query entry
 for query in qu:
     print(judge_query(query, device_dict, interface_dict, ap_acls, ap_fts,
         iset_dict_acls, iset_dict_fts))

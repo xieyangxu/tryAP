@@ -47,7 +47,6 @@ def network_dfs(iport, eport, set_acl, set_ft, dfsn):
 
     traverse_flags[in_device_name] = dfsn
 
-    
     # find next hop device
     for out_interface in device_dict[in_device_name]['Interfaces']:
         out_interface_name = out_interface['Name']
@@ -77,6 +76,21 @@ def network_dfs(iport, eport, set_acl, set_ft, dfsn):
             
 def judge_query(query, _device_dict, _interface_dict, _ap_acls, _ap_fts,
     _iset_dict_acls, _iset_dict_fts) -> bool:
+    """Judgement of a reachability statement
+
+        Search available route from Ingress to Egress via DFS, if multiple routes
+        exist, the reachable packets should be the union of allowed packets 
+        through all available routes.
+        Assumptions:
+            Only one Ingress port and one Egress port envolved, though the 
+            function can easily be extended to loose this assumption
+        Args:
+            query: an query instance from YAML file
+            OTHERS: related data structure used in the algorithm
+        Returns:
+            True, if ALL packets injected into Ingress port CAN reach Egress
+            False, elsewise
+    """
     # initiate pointers to global datastructure
     global device_dict
     global interface_dict

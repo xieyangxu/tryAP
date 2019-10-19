@@ -158,10 +158,3 @@ def qu2pred(query) -> farray: # convert a query to a predicate
     f = f_protocol & f_dstip & f_srcip & f_dstport & f_srcport
     return f
 
-
-
-if __name__=="__main__":
-    #pred = ipp2bdd('70.4.193.0/24')
-    #print(bdd2expr(pred))
-    f = range2bdd('0-65535', 16, 'pro')
-    print(bdd2expr(f))
