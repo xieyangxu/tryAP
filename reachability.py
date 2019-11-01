@@ -2,6 +2,7 @@ from typing import Set, List
 
 from bddutils import *
 from aputils import *
+from timeutils import *
 
 # pointers to data structures in main.py
 device_dict = {}
@@ -73,7 +74,8 @@ def network_dfs(iport, eport, set_acl, set_ft, dfsn):
     
     traverse_flags[in_device_name] = 0
     return
-            
+
+@timeit          
 def judge_query(query, _device_dict, _interface_dict, _ap_acls, _ap_fts,
     _iset_dict_acls, _iset_dict_fts) -> bool:
     """Judgement of a reachability statement
