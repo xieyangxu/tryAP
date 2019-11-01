@@ -3,6 +3,7 @@ import os.path
 
 from bddutils import *
 from reachability import *
+from timeutils import *
 
 trace = 'sample'
 
