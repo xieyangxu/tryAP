@@ -1,34 +1,31 @@
 from typing import Set, List
 
 from bddutils import *
-from aputils import *
 
 # pointers to data structures in main.py
 device_dict = {}
 interface_dict = {}
-ap_acls = []
-ap_fts = []
-iset_dict_acls = {}
-iset_dict_fts = {}
+pred_dict_acls = {}
+pred_dict_fts = {}
 
 # global data structure for dfs
 traverse_flags = {}
 reachable = []
 
-def network_dfs(iport, eport, set_acl, set_ft, dfsn):
+def network_dfs(iport, eport, pred_traffic, dfsn):
     global device_dict
     global interface_dict
-    global iset_dict_acls
-    global iset_dict_fts
+    global pred_dict_acls
+    global pred_dict_fts
     global traverse_flags
     global reachable
 
     inbound_acl = interface_dict[iport]['InAcl']
     if  inbound_acl != None:
-        set_acl &= iset_dict_acls[inbound_acl]
+        pred_traffic &= pred_dict_acls[inbound_acl]
 
     # Traceback condition 1: No possible header left
-    if len(set_acl) == 0 or len(set_ft) == 0:
+    if pred_traffic.is_zero():
         return
 
     # Traceback condition 2: reach dst device
@@ -38,11 +35,11 @@ def network_dfs(iport, eport, set_acl, set_ft, dfsn):
         # only consider target eport
         outbound_acl = interface_dict[eport]['OutAcl']
         if outbound_acl != None:
-            set_acl &= iset_dict_acls[outbound_acl]
-        set_ft &= iset_dict_fts[eport]
+            pred_traffic &= pred_dict_acls[outbound_acl]
+        pred_traffic &= pred_dict_fts[eport]
         # find a path that eport is reachable
-        if len(set_acl) > 0 and len(set_ft) > 0:
-            reachable.append((set_acl, set_ft))
+        if not pred_traffic.is_zero():
+            reachable.append(pred_traffic)
         return
 
     traverse_flags[in_device_name] = dfsn
@@ -62,20 +59,20 @@ def network_dfs(iport, eport, set_acl, set_ft, dfsn):
         if traverse_flags[next_hop_device] != 0:
             continue
 
-        new_set_acl = set_acl
+        new_pred_traffic = pred_traffic
         outbound_acl = interface_dict[out_interface_name]['OutAcl']
         if outbound_acl != None:
-            new_set_acl &= iset_dict_acls[outbound_acl]
-        new_set_ft = set_ft & iset_dict_fts[out_interface_name]
+            new_pred_traffic &= pred_dict_acls[outbound_acl]
+        new_pred_traffic &= pred_dict_fts[out_interface_name]
 
         # dfs recuisive
-        network_dfs(next_hop_iport, eport, new_set_acl, new_set_ft, dfsn + 1)
+        network_dfs(next_hop_iport, eport, new_pred_traffic, dfsn + 1)
     
     traverse_flags[in_device_name] = 0
     return
             
-def judge_query(query, _device_dict, _interface_dict, _ap_acls, _ap_fts,
-    _iset_dict_acls, _iset_dict_fts) -> bool:
+def judge_query(query, _device_dict, _interface_dict,
+    _pred_dict_acls, _pred_dict_fts) -> bool:
     """Judgement of a reachability statement
 
         Search available route from Ingress to Egress via DFS, if multiple routes
@@ -94,47 +91,32 @@ def judge_query(query, _device_dict, _interface_dict, _ap_acls, _ap_fts,
     # initiate pointers to global datastructure
     global device_dict
     global interface_dict
-    global ap_acls
-    global ap_fts
-    global iset_dict_acls
-    global iset_dict_fts
+    global pred_dict_acls
+    global pred_dict_fts
     device_dict = _device_dict
     interface_dict = _interface_dict
-    ap_acls = _ap_acls
-    ap_fts = _ap_fts
-    iset_dict_acls = _iset_dict_acls 
-    iset_dict_fts = _iset_dict_fts
+    pred_dict_acls = _pred_dict_acls 
+    pred_dict_fts = _pred_dict_fts
 
     iport = query['Ingress'][0]
     eport = query['Egress'][0]
 
     qu_pred = qu2pred(query)
-    
-    inject_set_acl = decompose_pred(qu_pred, ap_acls)
-    inject_set_ft = decompose_pred(qu_pred, ap_fts)
 
     global traverse_flags
     traverse_flags = {
         name:0
         for name,device in device_dict.items() 
     }
-    # every reachable path turns out to be a (s_acl, s_ft) tuple in reachable[]
+    # every reachable path turns out to be a BDD-predicate in reachable[]
     global reachable
     reachable = []
-    network_dfs(iport, eport, inject_set_acl, inject_set_ft, 1)
+    network_dfs(iport, eport, qu_pred, 1)
 
     # union of all reachable paths
     reachable_pred = bdd_false
-    for s_acl, s_ft in reachable:
-        pred_acl = bdd_false
-        for i in s_acl:
-            pred_acl |= ap_acls[i]
-        
-        pred_ft = bdd_false
-        for i in s_ft:
-            pred_ft |= ap_fts[i]
-
-        reachable_pred |= pred_acl & pred_ft
+    for pred in reachable:
+        reachable_pred |= pred
 
     # judge: qu_pred is a subset of reachable_pred
     return (~reachable_pred & qu_pred).is_zero()
