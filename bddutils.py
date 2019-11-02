@@ -3,11 +3,12 @@ import ipaddress
 from pyeda.boolalg.bdd import bdd2expr
 from pyeda.boolalg.bfarray import farray
 from pyeda.boolalg.bfarray import bddzeros, bddones, bddvars
+from timeutils import *
 
 bdd_false = bddzeros(1)[0]
 bdd_true = bddones(1)[0]
 
-
+#@timeit
 def ipp2bdd(ipprefix='0.0.0.0/0', namespace='dip'): # convert a ip prefix to BDD
     ipn = ipaddress.ip_network(ipprefix)
     addr_int = int(ipn.network_address)
@@ -54,6 +55,7 @@ def equal2bdd(v, bitlen, namespace): # BDD version of f(x): x==v?
             f = f & ~x[i]
     return f
 
+#@timeit
 def range2bdd(vrange, bitlen, namespace): # BDD version of f(x): x in vrange?
     tmp = vrange.split('-')
     vstart = int(tmp[0])
@@ -84,6 +86,7 @@ def aclr2bdd(acl_rule): # convert an ACL rule to BDD
     f = f_protocol & f_dstip & f_srcip & f_dstport & f_srcport
     return f
 
+@timeit
 def acl2pred(acl) -> farray:
     """Algorithm 1
         Converts an ACL to a predicate.
@@ -108,6 +111,7 @@ def rule_preflen(ft_rule) -> int: # helper function to sort forwarding table
     ipn = ipaddress.IPv4Network(ft_rule['Prefix'])
     return ipn.prefixlen
 
+#@timeit
 def ft2preds(forwarding_table, interfaces) -> Dict[str, farray]:
     """Algorithm 2
         Converts a forwarding table to predicates.
@@ -129,6 +133,7 @@ def ft2preds(forwarding_table, interfaces) -> Dict[str, farray]:
         fwd = fwd | prefix # fwd <- fwd \/ prefix
     return preds
 
+@timeit
 def qu2pred(query) -> farray: # convert a query to a predicate
     # protocol
     f_protocol = bdd_false
