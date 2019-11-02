@@ -1,0 +1,19 @@
+Devices:
+  - Name: r4
+    Interfaces:
+      - Name: r4@Eth3
+        Neighbor: null
+        InAcl: null
+        OutAcl: r4_outbound_update
+    Acls:
+      - Name: r4_outbound_update
+        DefaultAction: Allow
+        Rules:
+          - Description: "update to flip last sample query"
+            DstIp: 70.4.193.0/32
+            SrcIp: 0.0.0.0/0
+            Protocol: 17-17
+            DstPort: 0-65535
+            SrcPort: 0-65535
+            Action: Deny
+  

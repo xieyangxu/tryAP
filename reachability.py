@@ -13,7 +13,7 @@ pred_dict_fts = {}
 traverse_flags = {}
 reachable = []
 
-@timeit
+#@timeit
 def network_dfs(iport, eport, pred_traffic, dfsn):
     global device_dict
     global interface_dict

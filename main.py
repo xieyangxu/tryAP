@@ -1,5 +1,6 @@
 import yaml
 import os.path
+import copy
 
 from bddutils import *
 from reachability import *
@@ -27,6 +28,10 @@ interface_dict = {
     interface['Name']:interface
     for device in dp['Devices'] for interface in device['Interfaces']
 }
+acl_dict = {
+    acl['Name']:acl
+    for device in dp['Devices'] for acl in device['Acls']
+}
 
 # convert every ACL to a predicate and build name-predicate dict
 pred_dict_acls = {
@@ -41,5 +46,27 @@ for device in dp['Devices']:
     pred_dict_fts.update(sub_dict)
 
 # Judge reachability statement for every query entry
+for query in qu:
+    print(judge_query(query, device_dict, interface_dict, pred_dict_acls, pred_dict_fts))
+
+# load acl update
+update_path = os.path.join(ws_path, 'traces/dataplane/'+trace+'_dataplane_update.yml')
+try:
+    with open(update_path) as f:
+        update = yaml.load(f, Loader=yaml.SafeLoader)
+except IOError as e:
+    print('No update file found.')
+    exit()
+print('---------------- Update file loaded ----------------')
+
+# update original dict
+for device in update['Devices']:
+    for interface in device['Interfaces']:
+        interface_dict[interface['Name']] = copy.deepcopy(interface)
+    for acl in device['Acls']:
+        acl_dict[acl['Name']] = copy.deepcopy(acl)
+        pred_dict_acls[acl['Name']] = acl2pred(acl)
+
+# Judge every query with updated dataplane
 for query in qu:
     print(judge_query(query, device_dict, interface_dict, pred_dict_acls, pred_dict_fts))

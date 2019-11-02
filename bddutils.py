@@ -86,7 +86,7 @@ def aclr2bdd(acl_rule): # convert an ACL rule to BDD
     f = f_protocol & f_dstip & f_srcip & f_dstport & f_srcport
     return f
 
-@timeit
+#@timeit
 def acl2pred(acl) -> farray:
     """Algorithm 1
         Converts an ACL to a predicate.
@@ -133,7 +133,7 @@ def ft2preds(forwarding_table, interfaces) -> Dict[str, farray]:
         fwd = fwd | prefix # fwd <- fwd \/ prefix
     return preds
 
-@timeit
+#@timeit
 def qu2pred(query) -> farray: # convert a query to a predicate
     # protocol
     f_protocol = bdd_false

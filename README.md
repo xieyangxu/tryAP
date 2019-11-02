@@ -1,6 +1,8 @@
 # About
 
-A simple BDD-based naive dataplane verifier. Incremental verification supported. Attached a [microbenchmark](#Microbenchmarks) vs AP verifier.
+A simple BDD-based naive dataplane verifier. Incremental verification is naturally supported since adding/deleting rules do not influence BDD verifier. 
+
+Attached a [microbenchmark](#Microbenchmarks) vs AP verifier.
 
 # Dependencies
 
@@ -33,7 +35,7 @@ A simple BDD-based naive dataplane verifier. Incremental verification supported.
   - `ft2preds` Implements Algorithm 2 in [1]. Converts a forwarding table to forwarding predicates, each represented by BDD
 - `reachability.py`
   - `judge_query` Computes reachability tree from input port to output port via Deep First Search, see whether the invariant holds or not
-- `main.py` Data structures and implementatin of Atomic Predicates algorithm 
+- `main.py` Data structures and implementatin of Atomic Predicates algorithm with update
 - `./traces`
 
 
@@ -72,3 +74,8 @@ A simple BDD-based naive dataplane verifier. Incremental verification supported.
   - Both methods need to build query predicate (up to 104 BDD variables), which takes a significant portion of time. This is O(1) and hopefully could be optimized with better implementation
   - AP verifier needs to decompose query with APs, and ACL APs are complex (with up to 104 BDD variables), this is a downside of AP verifier
   - Despite so many downsides, AP verifier boosts DFS by 3 orders of magnitude, even with a naive set implementation. With DFS taking the most significant bound O(n^2), AP verifier might be able to scale better then BDD verifier and other SMT-based methods
+
+# Conclusion
+
+- BDD verifier is faster in small scale networks. However, AP verifier boosts DFS-based reachability search by 3 orders of magnitude, and thus potentially scales better
+- The overhead of AP verifier is related with # of atomic predicates in the system and the efficiency of basic BDD util functions
