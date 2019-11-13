@@ -2,7 +2,7 @@
 
 A simple BDD-based naive dataplane verifier. Incremental verification is naturally supported since adding/deleting rules do not influence BDD verifier. 
 
-Attached a [microbenchmark](#Microbenchmarks) vs AP verifier.
+Now adapted with multipath-consistant semantics. See updated features in [Updates](#Updates) section
 
 # Dependencies
 
@@ -79,3 +79,8 @@ Attached a [microbenchmark](#Microbenchmarks) vs AP verifier.
 
 - BDD verifier is faster in small scale networks. However, AP verifier boosts DFS-based reachability search by 3 orders of magnitude, and thus potentially scales better
 - The overhead of AP verifier is related with # of atomic predicates in the system and the efficiency of basic BDD util functions
+
+# Updates
+
+- With the multipath-enabled forwarding table representation, longest-path matching rule of forwarding tables does not apply again. 
+- Multipath consistant semantics: query header space does not allow split. And for every header in query header space, if one device is forwarded to, it must have a different neighbor which is reachable to the destination.
