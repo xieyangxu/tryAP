@@ -123,14 +123,20 @@ def ft2preds(forwarding_table, interfaces) -> Dict[str, farray]:
     """
     preds = {interface['Name']:bdd_false for interface in interfaces} # init with false
 
-    forwarding_table.sort(key=rule_preflen, reverse=True) # longest prefix first
+    # forwarding_table.sort(key=rule_preflen, reverse=True) # longest prefix first
     
-    fwd = bdd_false # fwd <- false
+    # fwd = bdd_false # fwd <- false
+    # for ft_rule in forwarding_table:
+    #     if_name = ft_rule['Interface']
+    #     prefix = ipp2bdd(ft_rule['Prefix']) # p <- p \/ (prefix /\ ~fwd)
+    #     preds[if_name] = preds[if_name] | (prefix & (~fwd))
+    #     fwd = fwd | prefix # fwd <- fwd \/ prefix
+
+    # NOTE: for multipath routing, longest-match rule does NOT apply
     for ft_rule in forwarding_table:
         if_name = ft_rule['Interface']
         prefix = ipp2bdd(ft_rule['Prefix']) # p <- p \/ (prefix /\ ~fwd)
-        preds[if_name] = preds[if_name] | (prefix & (~fwd))
-        fwd = fwd | prefix # fwd <- fwd \/ prefix
+        preds[if_name] = preds[if_name] | prefix
     return preds
 
 #@timeit

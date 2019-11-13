@@ -1,0 +1,111 @@
+# traffic to loopback should not be reachable in general
+# Answer 1: FALSE
+- Ingress: [r1@Eth0]
+  Egress: [r4@Loopback0]
+  DstIp: [10.0.0.1/32]
+  SrcIp: [0.0.0.0/0]
+  Protocol: [0-255]
+  DstPort: [0-65535]
+  SrcPort: [0-65535]
+# traffic to loopback should be reachable in from the right source
+# Answer 2: TRUE
+- Ingress: [r1@Eth0]
+  Egress: [r4@Loopback0]
+  DstIp: [10.0.0.1/32]
+  SrcIp: [70.4.194.0/24]
+  Protocol: [0-255]
+  DstPort: [0-65535]
+  SrcPort: [0-65535]
+# traffic between hosts should not be reachable in general
+# Answer 3: FALSE
+- Ingress: [r1@Eth0]
+  Egress: [r4@Eth3]
+  DstIp: [70.4.193.0/24]
+  SrcIp: [0.0.0.0/0]
+  Protocol: [0-255]
+  DstPort: [0-65535]
+  SrcPort: [0-65535]
+# traffic between hosts should not be reachable for TCP SSH traffic if from the wrong source
+# Answer 4: FALSE
+- Ingress: [r1@Eth0]
+  Egress: [r4@Eth3]
+  DstIp: [70.4.193.0/24]
+  SrcIp: [0.0.0.0/0]
+  Protocol: [6-6]
+  DstPort: [22-22]
+  SrcPort: [0-65535]
+# traffic between hosts should be reachable for TCP SSH traffic from the right source
+# Answer 5: TRUE
+- Ingress: [r1@Eth0]
+  Egress: [r4@Eth3]
+  DstIp: [70.4.193.0/24]
+  SrcIp: [70.4.194.0/24]
+  Protocol: [6-6]
+  DstPort: [22-22]
+  SrcPort: [0-65535]
+# splitting a prefix should not affect reachability
+# Answer 6: TRUE
+- Ingress: [r1@Eth0]
+  Egress: [r4@Eth3]
+  DstIp: [70.4.193.0/24]
+  SrcIp: [70.4.194.0/25, 70.4.194.128/25]
+  Protocol: [6-6]
+  DstPort: [22-22]
+  SrcPort: [0-65535]
+# traffic between hosts should be reachable for UDP
+# Answer 7: TRUE
+- Ingress: [r1@Eth0]
+  Egress: [r4@Eth3]
+  DstIp: [70.4.193.0/24]
+  SrcIp: [70.4.194.0/24]
+  Protocol: [17-17]
+  DstPort: [0-65535]
+  SrcPort: [0-65535]
+# this query is multipath inconsistent as r2 does not allow ssh to go through but r3 does
+# Answer 8: FALSE
+- Ingress: [r1@Eth0]
+  Egress: [r4@Loopback1]
+  DstIp: [10.0.0.2/32]
+  SrcIp: [70.4.194.0/24]
+  Protocol: [0-255]
+  DstPort: [22-22]
+  SrcPort: [0-65535]  
+# non-SSH traffic to loopback1 should be allowed all the way
+# Answer 9: TRUE
+- Ingress: [r1@Eth0]
+  Egress: [r4@Loopback1]
+  DstIp: [10.0.0.2/32]
+  SrcIp: [70.4.194.0/24]
+  Protocol: [0-255]
+  DstPort: [0-21]
+  SrcPort: [0-65535]  
+# this query corresponds to a routing dead end
+# Answer 10: FALSE
+- Ingress: [r1@Eth0]
+  Egress: [r4@Loopback1]
+  DstIp: [80.10.10.0/24]
+  SrcIp: [70.4.194.0/24]
+  Protocol: [0-255]
+  DstPort: [0-65535]
+  SrcPort: [0-65535]
+# this query corresponds to a super-prefix 
+# the lower half (70.4.192.0/24) is not permitted, the upper half (70.4.193.0/24) is permitted
+# Answer 11: FALSE
+- Ingress: [r1@Eth0]
+  Egress: [r4@Eth3]
+  DstIp: [70.4.192.0/23]
+  SrcIp: [70.4.194.0/24]
+  Protocol: [0-255]
+  DstPort: [0-65535]
+  SrcPort: [0-65535]
+# this query corresponds to a super-prefix
+# the lower half (70.4.194.0/24) is  permitted, the upper half (70.4.195.0/24) is not permitted
+# NB: the ingress and egress are on the same node
+# Answer 12: FALSE
+- Ingress: [r1@Eth1]
+  Egress: [r1@Eth0]
+  DstIp: [70.4.194.0/23]
+  SrcIp: [0.0.0.0/0]
+  Protocol: [0-255]
+  DstPort: [0-65535]
+  SrcPort: [0-65535]

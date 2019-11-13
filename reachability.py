@@ -11,42 +11,55 @@ pred_dict_fts = {}
 
 # global data structure for dfs
 traverse_flags = {}
-reachable = []
+route = []
+qu_pred = bdd_true
 
 #@timeit
-def network_dfs(iport, eport, pred_traffic, dfsn):
+def network_dfs(iport, eport, pred_traffic, dfsn) -> bool:
     global device_dict
     global interface_dict
     global pred_dict_acls
     global pred_dict_fts
     global traverse_flags
-    global reachable
+    global route
+    global qu_pred
 
     inbound_acl = interface_dict[iport]['InAcl']
     if  inbound_acl != None:
         pred_traffic &= pred_dict_acls[inbound_acl]
 
-    # Traceback condition 1: No possible header left
-    if pred_traffic.is_zero():
-        return
+    # # Traceback condition 1: No possible header left
+    # if pred_traffic.is_zero():
+    #     return
 
-    # Traceback condition 2: reach dst device
+    # Terminal condition 1: header space splitted
+    if not pred_traffic == qu_pred:
+        return False
+
+    # Terminal condition 2: reach dst device
     in_device_name = iport.split('@')[0]
     dst_device_name = eport.split('@')[0]
     if dst_device_name == in_device_name: 
         # only consider target eport
+        new_pred_traffic = pred_traffic & pred_dict_fts[eport]
         outbound_acl = interface_dict[eport]['OutAcl']
         if outbound_acl != None:
-            pred_traffic &= pred_dict_acls[outbound_acl]
-        pred_traffic &= pred_dict_fts[eport]
-        # find a path that eport is reachable
-        if not pred_traffic.is_zero():
-            reachable.append(pred_traffic)
-        return
+            new_pred_traffic &= pred_dict_acls[outbound_acl]
+        # reachable for whole query space
+        if new_pred_traffic == qu_pred:
+            #reachable.append(new_pred_traffic)
+            route.append(in_device_name)
+            print(route)
+            del route[-1]
+            return True
+        return False
 
     traverse_flags[in_device_name] = dfsn
+    route.append(in_device_name)
+    #print(route)
 
     # find next hop device
+    out_flag = False
     for out_interface in device_dict[in_device_name]['Interfaces']:
         out_interface_name = out_interface['Name']
         #if out_interface_name == iport: # NOTE: assume no backwards forwarding
@@ -54,24 +67,26 @@ def network_dfs(iport, eport, pred_traffic, dfsn):
         next_hop_iport = out_interface['Neighbor']
         if next_hop_iport == None:
             continue
-
+        
         next_hop_device = next_hop_iport.split('@')[0]
         # Error condition 1: Loop detected
         # FIXME: should raise Exception
         if traverse_flags[next_hop_device] != 0:
             continue
 
-        new_pred_traffic = pred_traffic
+        new_pred_traffic = pred_traffic & pred_dict_fts[out_interface_name]
         outbound_acl = interface_dict[out_interface_name]['OutAcl']
         if outbound_acl != None:
             new_pred_traffic &= pred_dict_acls[outbound_acl]
-        new_pred_traffic &= pred_dict_fts[out_interface_name]
 
         # dfs recuisive
-        network_dfs(next_hop_iport, eport, new_pred_traffic, dfsn + 1)
-    
+        out_flag |= network_dfs(next_hop_iport, eport, new_pred_traffic, dfsn + 1)
+        if out_flag == False:
+            return False
+        
     traverse_flags[in_device_name] = 0
-    return
+    del route[-1]
+    return True
 
 @timeit            
 def judge_query(query, _device_dict, _interface_dict,
@@ -104,6 +119,7 @@ def judge_query(query, _device_dict, _interface_dict,
     iport = query['Ingress'][0]
     eport = query['Egress'][0]
 
+    global qu_pred
     qu_pred = qu2pred(query)
 
     global traverse_flags
@@ -112,15 +128,8 @@ def judge_query(query, _device_dict, _interface_dict,
         for name,device in device_dict.items() 
     }
     # every reachable path turns out to be a BDD-predicate in reachable[]
-    global reachable
-    reachable = []
-    network_dfs(iport, eport, qu_pred, 1)
+    global route
+    route = []
+    return network_dfs(iport, eport, qu_pred, 1)
 
-    # union of all reachable paths
-    reachable_pred = bdd_false
-    for pred in reachable:
-        reachable_pred |= pred
-
-    # judge: qu_pred is a subset of reachable_pred
-    return (~reachable_pred & qu_pred).is_zero()
     

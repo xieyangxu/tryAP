@@ -1,0 +1,167 @@
+Devices:
+  - Name: r1
+    Interfaces:
+      - Name: r1@Eth0
+        Neighbor: null
+        InAcl: null
+        OutAcl: null
+      - Name: r1@Eth1
+        Neighbor: r2@Eth1
+        InAcl: null
+        OutAcl: r2_outbound_host_permit
+      - Name: r1@Eth2
+        Neighbor: r3@Eth1
+        InAcl: null
+        OutAcl: r2_outbound_host_permit
+    ForwardingTable:
+      - Prefix: 70.4.193.0/24
+        Interface: r1@Eth1
+      - Prefix: 70.4.193.0/24
+        Interface: r1@Eth2
+      - Prefix: 10.0.0.1/32
+        Interface: r1@Eth1
+      - Prefix: 10.0.0.1/32
+        Interface: r1@Eth2
+      - Prefix: 10.0.0.2/32
+        Interface: r1@Eth1
+      - Prefix: 10.0.0.2/32
+        Interface: r1@Eth2
+      - Prefix: 70.4.194.0/24
+        Interface: r1@Eth0
+      - Prefix: 80.10.10.0/24
+        Interface: r1@Eth1
+    Acls:
+      - Name: r2_outbound_host_permit
+        DefaultAction: Deny
+        Rules:
+          - Description: "allow srcip for host"
+            DstIp: 0.0.0.0/0
+            SrcIp: 70.4.194.0/24
+            Protocol: 0-255
+            DstPort: 0-65535
+            SrcPort: 0-65535
+            Action: Allow
+  - Name: r2
+    Interfaces:
+      - Name: r2@Eth1 
+        Neighbor: r1@Eth1
+        InAcl: null
+        OutAcl: null
+      - Name: r2@Eth2
+        Neighbor: r4@Eth1
+        InAcl: null
+        OutAcl: block_ssh_to_loopback1        
+    ForwardingTable:
+      - Prefix: 70.4.193.0/24
+        Interface: r2@Eth2
+      - Prefix: 10.0.0.1/32
+        Interface: r2@Eth2
+      - Prefix: 10.0.0.2/32
+        Interface: r2@Eth2
+      - Prefix: 70.4.194.0/24
+        Interface: r2@Eth1
+    Acls:
+      - Name: block_ssh_to_loopback1
+        DefaultAction: Deny
+        Rules:
+          - Description: "block ssh traffic to loopback1"
+            DstIp: 10.0.0.2/32
+            SrcIp: 0.0.0.0/0
+            Protocol: 0-255
+            DstPort: 22-22
+            SrcPort: 0-65535
+            Action: Deny
+          - Description: "allow everything else"
+            DstIp: 0.0.0.0/0
+            SrcIp: 0.0.0.0/0
+            Protocol: 0-255
+            DstPort: 0-65535
+            SrcPort: 0-65535
+            Action: Allow
+  - Name: r3
+    Interfaces:
+      - Name: r3@Eth1
+        Neighbor: r1@Eth2
+        InAcl: null
+        OutAcl: null
+      - Name: r3@Eth2
+        Neighbor: r4@Eth2
+        InAcl: null
+        OutAcl: null
+    ForwardingTable:
+      - Prefix: 70.4.193.0/24
+        Interface: r3@Eth2
+      - Prefix: 10.0.0.1/32
+        Interface: r3@Eth2
+      - Prefix: 10.0.0.2/32
+        Interface: r3@Eth2
+      - Prefix: 70.4.194.0/24
+        Interface: r3@Eth1
+    Acls: []
+  - Name: r4
+    Interfaces:
+      - Name: r4@Loopback0
+        Neighbor: null
+        InAcl: null
+        OutAcl: null
+      - Name: r4@Loopback1
+        Neighbor: null
+        InAcl: null
+        OutAcl: null
+      - Name: r4@Eth3
+        Neighbor: null
+        InAcl: null
+        OutAcl: null
+      - Name: r4@Eth1
+        Neighbor: r2@Eth2
+        InAcl: r4_inbound_deny
+        OutAcl: null
+      - Name: r4@Eth2 
+        Neighbor: r3@Eth2
+        InAcl: r4_inbound_deny
+        OutAcl: null
+    ForwardingTable:
+      - Prefix: 70.4.193.0/24
+        Interface: r4@Eth3
+      - Prefix: 10.0.0.1/32
+        Interface: r4@Loopback0
+      - Prefix: 10.0.0.2/32
+        Interface: r4@Loopback1
+      - Prefix: 80.10.10.0/24
+        Interface: r4@Loopback1
+      - Prefix: 70.4.194.0/24
+        Interface: r4@Eth1
+      - Prefix: 70.4.194.0/24
+        Interface: r4@Eth2
+    Acls:
+      - Name: r4_inbound_deny
+        DefaultAction: Deny
+        Rules:
+          - Description: "allow UDP traffic"
+            DstIp: 70.4.193.0/24
+            SrcIp: 0.0.0.0/0
+            Protocol: 17-17
+            DstPort: 0-65535
+            SrcPort: 0-65535
+            Action: Allow
+          - Description: "allow SSH over TCP traffic"
+            DstIp: 70.4.193.0/24
+            SrcIp: 0.0.0.0/0
+            Protocol: 6-6
+            DstPort: 22-22
+            SrcPort: 0-65535
+            Action: Allow
+          - Description: "allow traffic for loopback0"
+            DstIp: 10.0.0.1/32
+            SrcIp: 0.0.0.0/0
+            Protocol: 0-255
+            DstPort: 0-65535
+            SrcPort: 0-65535
+            Action: Allow
+          - Description: "allow traffic for loopback1"
+            DstIp: 10.0.0.2/32
+            SrcIp: 0.0.0.0/0
+            Protocol: 0-255
+            DstPort: 0-65535
+            SrcPort: 0-65535
+            Action: Allow

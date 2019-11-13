@@ -6,7 +6,7 @@ from bddutils import *
 from reachability import *
 from timeutils import *
 
-trace = 'sample'
+trace = 'grading'
 
 # load dataplane and queries from yaml file
 ws_path = os.path.abspath(os.path.dirname(__file__))
@@ -45,9 +45,11 @@ for device in dp['Devices']:
     sub_dict = ft2preds(device['ForwardingTable'], device['Interfaces'])
     pred_dict_fts.update(sub_dict)
 
+
 # Judge reachability statement for every query entry
-for query in qu:
-    print(judge_query(query, device_dict, interface_dict, pred_dict_acls, pred_dict_fts))
+for i, query in enumerate(qu):
+    print('#%d: %s' % (i+1 , judge_query(query, device_dict, interface_dict, pred_dict_acls, pred_dict_fts)))
+    print()
 
 # load acl update
 update_path = os.path.join(ws_path, 'traces/dataplane/'+trace+'_dataplane_update.yml')
@@ -68,5 +70,6 @@ for device in update['Devices']:
         pred_dict_acls[acl['Name']] = acl2pred(acl)
 
 # Judge every query with updated dataplane
-for query in qu:
-    print(judge_query(query, device_dict, interface_dict, pred_dict_acls, pred_dict_fts))
+for i, query in enumerate(qu):
+    print('#%d: %s' % (i , judge_query(query, device_dict, interface_dict, pred_dict_acls, pred_dict_fts)))
+    print()
