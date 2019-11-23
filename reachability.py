@@ -1,8 +1,8 @@
 from typing import Set, List
 
-from bddutils import *
-from aputils import *
-from timeutils import *
+from tryAP.bddutils import *
+from tryAP.aputils import *
+from tryAP.timeutils import *
 
 # pointers to data structures in main.py
 device_dict = {}
@@ -16,6 +16,7 @@ iset_dict_fts = {}
 traverse_flags = {}
 reachable = []
 
+
 def network_dfs(iport, eport, set_acl, set_ft, dfsn):
     global device_dict
     global interface_dict
@@ -25,7 +26,7 @@ def network_dfs(iport, eport, set_acl, set_ft, dfsn):
     global reachable
 
     inbound_acl = interface_dict[iport]['InAcl']
-    if  inbound_acl != None:
+    if inbound_acl != None:
         set_acl &= iset_dict_acls[inbound_acl]
 
     # Traceback condition 1: No possible header left
@@ -35,7 +36,7 @@ def network_dfs(iport, eport, set_acl, set_ft, dfsn):
     # Traceback condition 2: reach dst device
     in_device_name = iport.split('@')[0]
     dst_device_name = eport.split('@')[0]
-    if dst_device_name == in_device_name: 
+    if dst_device_name == in_device_name:
         # only consider target eport
         outbound_acl = interface_dict[eport]['OutAcl']
         if outbound_acl != None:
@@ -51,7 +52,7 @@ def network_dfs(iport, eport, set_acl, set_ft, dfsn):
     # find next hop device
     for out_interface in device_dict[in_device_name]['Interfaces']:
         out_interface_name = out_interface['Name']
-        #if out_interface_name == iport: # NOTE: assume no backwards forwarding
+        # if out_interface_name == iport: # NOTE: assume no backwards forwarding
         #    continue
         next_hop_iport = out_interface['Neighbor']
         if next_hop_iport == None:
@@ -71,13 +72,14 @@ def network_dfs(iport, eport, set_acl, set_ft, dfsn):
 
         # dfs recuisive
         network_dfs(next_hop_iport, eport, new_set_acl, new_set_ft, dfsn + 1)
-    
+
     traverse_flags[in_device_name] = 0
     return
 
-@timeit          
+
+@timeit
 def judge_query(query, _device_dict, _interface_dict, _ap_acls, _ap_fts,
-    _iset_dict_acls, _iset_dict_fts) -> bool:
+                _iset_dict_acls, _iset_dict_fts) -> bool:
     """Judgement of a reachability statement
 
         Search available route from Ingress to Egress via DFS, if multiple routes
@@ -104,21 +106,21 @@ def judge_query(query, _device_dict, _interface_dict, _ap_acls, _ap_fts,
     interface_dict = _interface_dict
     ap_acls = _ap_acls
     ap_fts = _ap_fts
-    iset_dict_acls = _iset_dict_acls 
+    iset_dict_acls = _iset_dict_acls
     iset_dict_fts = _iset_dict_fts
 
     iport = query['Ingress'][0]
     eport = query['Egress'][0]
 
     qu_pred = qu2pred(query)
-    
+
     inject_set_acl = decompose_pred(qu_pred, ap_acls)
     inject_set_ft = decompose_pred(qu_pred, ap_fts)
 
     global traverse_flags
     traverse_flags = {
-        name:0
-        for name,device in device_dict.items() 
+        name: 0
+        for name, device in device_dict.items()
     }
     # every reachable path turns out to be a (s_acl, s_ft) tuple in reachable[]
     global reachable
@@ -131,7 +133,7 @@ def judge_query(query, _device_dict, _interface_dict, _ap_acls, _ap_fts,
         pred_acl = bdd_false
         for i in s_acl:
             pred_acl |= ap_acls[i]
-        
+
         pred_ft = bdd_false
         for i in s_ft:
             pred_ft |= ap_fts[i]
@@ -140,4 +142,3 @@ def judge_query(query, _device_dict, _interface_dict, _ap_acls, _ap_fts,
 
     # judge: qu_pred is a subset of reachable_pred
     return (~reachable_pred & qu_pred).is_zero()
-    

@@ -1,6 +1,7 @@
 from typing import Set, List
-from bddutils import *
 from pyeda.boolalg.bfarray import farray
+
+from tryAP.bddutils import *
 
 # functions for atomic predicates
 
@@ -16,6 +17,7 @@ def pred2atomic_pred(pred: farray) -> Set[farray]:
     else:
         return {pred, ~pred}
 
+
 def preds2atomic_preds(preds: Set[farray]) -> List[farray]:
     """Algorithm 3
 
@@ -26,17 +28,20 @@ def preds2atomic_preds(preds: Set[farray]) -> List[farray]:
     for i, pred in enumerate(preds):
         if i == 0:
             atomic_preds = pred2atomic_pred(pred)
-        atomic_preds = {(b & d) for b in atomic_preds for d in pred2atomic_pred(pred)}
+        atomic_preds = {(b & d)
+                        for b in atomic_preds for d in pred2atomic_pred(pred)}
         atomic_preds = {a for a in atomic_preds if not a.is_zero()}
 
     return list(atomic_preds)
 
 # TODO: This could probably be interleaved with AP construction for perf gain
 #       But perf gain currently not worth it.
+
+
 def decompose_pred(pred: farray, atomic_preds: List[farray]) -> Set[int]:
     """Decomposes a predicate into its component atomic predicates,
         represented by their positions in the array
-        
+
        Inputs:
             pred: Predicate to decompose.
             atomic_preds: List of atomic predicates for decomposition.
@@ -50,6 +55,7 @@ def decompose_pred(pred: farray, atomic_preds: List[farray]) -> Set[int]:
             indexes.add(i)
     return indexes
 
+
 def is_representative(preds: Set[farray], repr_preds: List[farray]) -> bool:
     """Is repr_preds a representative set of preds?"""
 
@@ -57,7 +63,7 @@ def is_representative(preds: Set[farray], repr_preds: List[farray]) -> bool:
     # Property 1: no empty sets
     for rp in repr_preds:
         is_repr &= not rp.is_zero()
-    
+
     # Property 2: covers entire space
     space = bdd_false
     for rp in repr_preds:
@@ -68,7 +74,7 @@ def is_representative(preds: Set[farray], repr_preds: List[farray]) -> bool:
     for i in range(len(repr_preds) - 1):
         for j in range(i, len(repr_preds)):
             is_repr &= (repr_preds[i] & repr_preds[j]).is_zero()
-    
+
     for p in preds:
         new_p = bdd_false
         for i in decompose_pred(p, repr_preds):
