@@ -6,67 +6,52 @@ from bddutils import *
 from reachability import *
 from timeutils import *
 
-trace = 'sample'
 
-# load dataplane and queries from yaml file
-ws_path = os.path.abspath(os.path.dirname(__file__))
+def dp_check(dp, query):
+    # build name dict for devices and interfaces
+    device_dict = {
+        device['Name']:device
+        for device in dp['Devices']
+    }
+    interface_dict = {
+        interface['Name']:interface
+        for device in dp['Devices'] for interface in device['Interfaces']
+    }
+    acl_dict = {
+        acl['Name']:acl
+        for device in dp['Devices'] for acl in device['Acls']
+    }
 
-dp_path = os.path.join(ws_path, 'traces/dataplane/'+trace+'_dataplane.yml')
-with open(dp_path) as f:
-    dp = yaml.load(f, Loader=yaml.SafeLoader)
+    # convert every ACL to a predicate and build name-predicate dict
+    pred_dict_acls = {
+        acl['Name']:acl2pred(acl) 
+        for device in dp['Devices'] for acl in device['Acls']
+    }
 
-qu_path = os.path.join(ws_path, 'traces/query/'+trace+'_query.yml')
-with open(qu_path) as f:
-    qu = yaml.load(f, Loader=yaml.SafeLoader)
+    # build forwarding predicate for every interface and build name-predicate dict
+    pred_dict_fts = {}
+    for device in dp['Devices']:
+        sub_dict = ft2preds(device['ForwardingTable'], device['Interfaces'])
+        pred_dict_fts.update(sub_dict)
 
-# build name dict for devices and interfaces
-device_dict = {
-    device['Name']:device
-    for device in dp['Devices']
-}
-interface_dict = {
-    interface['Name']:interface
-    for device in dp['Devices'] for interface in device['Interfaces']
-}
-acl_dict = {
-    acl['Name']:acl
-    for device in dp['Devices'] for acl in device['Acls']
-}
+    # Judge reachability statement for every query entry
+    #for query in qu:
+    return judge_query(query, device_dict, interface_dict, pred_dict_acls, pred_dict_fts)
 
-# convert every ACL to a predicate and build name-predicate dict
-pred_dict_acls = {
-    acl['Name']:acl2pred(acl) 
-    for device in dp['Devices'] for acl in device['Acls']
-}
+if __name__ == "__main__":
+    trace = 'sample'
 
-# build forwarding predicate for every interface and build name-predicate dict
-pred_dict_fts = {}
-for device in dp['Devices']:
-    sub_dict = ft2preds(device['ForwardingTable'], device['Interfaces'])
-    pred_dict_fts.update(sub_dict)
+    # load dataplane and queries from yaml file
+    ws_path = os.path.abspath(os.path.dirname(__file__))
 
-# Judge reachability statement for every query entry
-for query in qu:
-    print(judge_query(query, device_dict, interface_dict, pred_dict_acls, pred_dict_fts))
+    dp_path = os.path.join(ws_path, 'traces/dataplane/'+trace+'_dataplane.yml')
+    with open(dp_path) as f:
+        dp = yaml.load(f, Loader=yaml.SafeLoader)
 
-# load acl update
-update_path = os.path.join(ws_path, 'traces/dataplane/'+trace+'_dataplane_update.yml')
-try:
-    with open(update_path) as f:
-        update = yaml.load(f, Loader=yaml.SafeLoader)
-except IOError as e:
-    print('No update file found.')
-    exit()
-print('---------------- Update file loaded ----------------')
+    qu_path = os.path.join(ws_path, 'traces/query/'+trace+'_query.yml')
+    with open(qu_path) as f:
+        qu = yaml.load(f, Loader=yaml.SafeLoader)
 
-# update original dict
-for device in update['Devices']:
-    for interface in device['Interfaces']:
-        interface_dict[interface['Name']] = copy.deepcopy(interface)
-    for acl in device['Acls']:
-        acl_dict[acl['Name']] = copy.deepcopy(acl)
-        pred_dict_acls[acl['Name']] = acl2pred(acl)
+    for query in qu:
+        print(dp_check(dp, query))
 
-# Judge every query with updated dataplane
-for query in qu:
-    print(judge_query(query, device_dict, interface_dict, pred_dict_acls, pred_dict_fts))

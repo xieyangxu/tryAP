@@ -73,7 +73,7 @@ def network_dfs(iport, eport, pred_traffic, dfsn):
     traverse_flags[in_device_name] = 0
     return
 
-@timeit            
+#@timeit            
 def judge_query(query, _device_dict, _interface_dict,
     _pred_dict_acls, _pred_dict_fts) -> bool:
     """Judgement of a reachability statement
