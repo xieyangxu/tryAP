@@ -1,7 +1,7 @@
 from typing import Set, List
 
-from bddutils import *
-from timeutils import *
+from tryAP.bddutils import *
+from tryAP.timeutils import *
 
 # pointers to data structures in main.py
 device_dict = {}

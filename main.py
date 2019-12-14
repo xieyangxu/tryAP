@@ -2,9 +2,9 @@ import yaml
 import os.path
 import copy
 
-from bddutils import *
-from reachability import *
-from timeutils import *
+from tryAP.bddutils import *
+from tryAP.reachability import *
+from tryAP.timeutils import *
 
 
 def dp_check(dp, query):

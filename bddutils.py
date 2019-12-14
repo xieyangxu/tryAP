@@ -3,7 +3,7 @@ import ipaddress
 from pyeda.boolalg.bdd import bdd2expr
 from pyeda.boolalg.bfarray import farray
 from pyeda.boolalg.bfarray import bddzeros, bddones, bddvars
-from timeutils import *
+from tryAP.timeutils import *
 
 bdd_false = bddzeros(1)[0]
 bdd_true = bddones(1)[0]
